@@ -1,5 +1,7 @@
 package main
 
+import "math"
+
 // Matrix.go: contains common operations for matrices and vectors.
 // Only required types for the raytracer are 3D and 4D vectors and matrices.
 
@@ -35,22 +37,13 @@ func add(m1, m2, m3 []entry, n int) {
 }
 
 // dot product: 3-vectors
-func (m *Vec3) dot(n *Vec3) *Vec3 {
-	return &Vec3{
-		m[cX] * n[cX],
-		m[cY] * n[cY],
-		m[cZ] * n[cZ],
-	}
+func (m *Vec3) dot(n *Vec3) entry {
+	return m[cX]*n[cX] + m[cY]*n[cY] + m[cZ]*n[cZ]
 }
 
 // dot product: 4-vectors
-func (m *Vec4) dot(n *Vec4) *Vec4 {
-	return &Vec4{
-		m[cX] * n[cX],
-		m[cY] * n[cY],
-		m[cZ] * n[cZ],
-		m[cW] * n[cW],
-	}
+func (m *Vec4) dot(n *Vec4) entry {
+	return m[cX]*n[cX] + m[cY]*n[cY] + m[cZ]*n[cZ] + m[cW]*n[cW]
 }
 
 // cross product: (only defined for) 3-vectors
@@ -88,6 +81,84 @@ func mult(m1, m2, m3 []entry, a, n, b int) {
 			m3[row*b+col] = sum
 		}
 	}
+}
+
+// wrap around math.Sqrt
+func sqrt(e entry) entry {
+	return entry(math.Sqrt(float64(e)))
+}
+
+// length: 3-vectors
+func (v *Vec3) magnitude() entry {
+	return sqrt(v.dot(v))
+}
+
+// length: 4-vectors
+func (v *Vec4) magnitude() entry {
+	return sqrt(v.dot(v))
+}
+
+// normalized direction: 3-vectors
+func (v *Vec3) direction() *Vec3 {
+	return v.scale(1 / v.magnitude())
+}
+
+// normalized direction: 4-vectors
+func (v *Vec4) direction() *Vec4 {
+	return v.scale(1 / v.magnitude())
+}
+
+// transpose the nxn matrix in m1 and place the result into m2
+func transpose(m1, m2 []entry, n int) {
+	// iterate through rows and cols:
+	for row := 0; row < n; row++ {
+		for col := 0; col < n; col++ {
+			m2[row*n+col] = m1[col*n+row]
+		}
+	}
+}
+
+// determinant of a 2x2 sub-matrix of a nxn matrix
+// args: slice containing a nxn matrix, n, (row,col) indices
+func det2(m []entry, n, r1, r2, c1, c2 int) entry {
+	return (m[r1*n+c1] * m[r2*n+c2]) - (m[r1*n+c2] * m[r2*n+c1])
+}
+
+// determinant: 3x3 matrix
+func (m *Mat3) determinant() entry {
+	ms, n := m[:], V3LEN
+
+	// approach: expand coefficients across the first row
+	return 0 + // for formatting
+		m[0]*det2(ms, n, 1, 2, 1, 2) +
+		m[1]*det2(ms, n, 1, 2, 2, 0) +
+		m[2]*det2(ms, n, 1, 2, 0, 1)
+}
+
+// determinant: 4x4 matrix
+func (m *Mat4) determinant() entry {
+
+	// precompute required 2-determinants:
+	// each such 2-det is a 2x2 matrix using only 
+	//	columns 2 and 3 (with any 2 rows of 4)
+	ms, n := m[:], V4LEN
+	d01 := det2(ms, n, 2, 3, 0, 1)
+	d02 := det2(ms, n, 2, 3, 0, 2)
+	d03 := det2(ms, n, 2, 3, 0, 3)
+	d12 := det2(ms, n, 2, 3, 1, 2)
+	d13 := det2(ms, n, 2, 3, 1, 3)
+	d23 := det2(ms, n, 2, 3, 2, 3)
+
+	// approach: 
+	//	expand coefficents across the first row, 
+	//	to get four 3x3 matrices.
+	//  for each 3x3 matrix, 
+	//		expand coefficients across the first row again.
+	return 0 + // for formatting
+		m[0]*(+m[n+1]*d23-m[n+2]*d13+m[n+3]*d12) +
+		m[1]*(-m[n+0]*d23+m[n+2]*d03-m[n+3]*d02) +
+		m[2]*(+m[n+0]*d13-m[n+1]*d03+m[n+3]*d01) +
+		m[3]*(-m[n+0]*d12+m[n+1]*d02-m[n+2]*d01)
 }
 
 // Wrappers for each of the types:
@@ -187,6 +258,20 @@ func (v *Vec4) timesMat(m *Mat4) *Vec4 {
 func (m *Mat4) timesVec(v *Vec4) *Vec4 {
 	res := new(Vec4)
 	mult(m[:], v[:], res[:], V4LEN, V4LEN, 1)
+	return res
+}
+
+// transpose: 3-vectors
+func (m *Mat3) transpose() *Mat3 {
+	res := new(Mat3)
+	transpose(m[:], res[:], V3LEN)
+	return res
+}
+
+// transpose: 4-vectors
+func (m *Mat4) transpose() *Mat4 {
+	res := new(Mat4)
+	transpose(m[:], res[:], V4LEN)
 	return res
 }
 
