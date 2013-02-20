@@ -20,7 +20,7 @@ import (
 //		- length, normalize  
 //	- matrix only tests
 //		- transpose, determinant 
-//		- matrix-inverse TODO
+//		- matrix-inverse
 
 var (
 	// some example matrices and vectors, for testing
@@ -30,10 +30,14 @@ var (
 	v42 Vec4 = Vec4{144, 3, -10, 22}
 	m31 Mat3 = Mat3{11, 12, 13, 21, 22, 23, 31, 32, 33}
 	m32 Mat3 = Mat3{44, 45, 46, 33, 30, 27, 51, 42, 33}
-	m33 Mat3 = Mat3{10, 17, -4, 22, 83, 12, -7, 23, 18} // an invertible matrix
+	m33 Mat3 = Mat3{10, 17, -4, 22, 83, 12, -7, 23, 18}
+	m34 Mat3 = Mat3{1, 0, 1, 1, 1, 0, 1, 2, 3} // inverse of m35
+	m35 Mat3 = Mat3{0.75, 0.5, -0.25, -0.75, 0.5, 0.25, 0.25, -0.5, 0.25}
 	m41 Mat4 = Mat4{11, 12, 13, 14, 21, 22, 23, 24, 31, 32, 33, 34, 41, 42, 43, 44}
 	m42 Mat4 = Mat4{44, 45, 46, 47, 33, 30, 27, 24, 51, 42, 33, 24, 11, 21, 13, 41}
-	m43 Mat4 = Mat4{17, 23, 54, 12, 87, 32, 55, -3, 21, -7, 14, 23, 10, 18, 54, 91} // invertible
+	m43 Mat4 = Mat4{17, 23, 54, 12, 87, 32, 55, -3, 21, -7, 14, 23, 10, 18, 54, 91}
+	m44 Mat4 = Mat4{1, 0, 1, 1, 1, 1, 0, 0, 1, 2, 3, 4, 1, 1, 1, 0} // inverse of m45
+	m45 Mat4 = Mat4{0.8, 0.6, -0.2, -0.2, -0.8, 0.4, 0.2, 0.2, 0, -1, 0, 1, 0.2, 0.4, 0.2, -0.8}
 )
 
 func TestAdditionOf3DVectors(t *testing.T) {
@@ -200,8 +204,25 @@ func TestDeterminantOf4x4Matrices(t *testing.T) {
 	assertEquals(t, entry(-4007964), m43.determinant(), "Mat4 determinant 3")
 }
 
+func TestInversionOf3x3Matrices(t *testing.T) {
+	assertM3Equals(t, m35, *m34.inverse(), "Mat3 inverse 4")
+	assertM3Equals(t, m34, *m35.inverse(), "Mat3 inverse 5")
+}
+
+func TestInversionOf4x4Matrices(t *testing.T) {
+	assertM4Equals(t, m45, *m44.inverse(), "Mat4 inverse 4")
+	assertM4Equals(t, m44, *m45.inverse(), "Mat4 inverse 5")
+}
+
 // Helper functions (for checking equality, with error messages)
 // Each function returns whether the assert passed
+
+// not-equal check:
+const TOLERANCE float64 = 0.00000001
+
+func (e1 entry) neq(e2 entry) bool {
+	return math.Abs(float64(e1-e2)) > TOLERANCE
+}
 
 func assert(t *testing.T, cond bool, msg string) bool {
 	if !cond {
@@ -213,4 +234,21 @@ func assert(t *testing.T, cond bool, msg string) bool {
 // use ONLY where equality is already defined in GO 
 func assertEquals(t *testing.T, exp, act interface{}, msg string) bool {
 	return assert(t, exp == act, msg+fmt.Sprint(":\n\t\tExp: ", exp, "\n\t\tAct: ", act))
+}
+
+func isMatEqual(exp, act []entry, n int) bool {
+	for i := 0; i < n; i++ {
+		if exp[i].neq(act[i]) {
+			return false
+		}
+	}
+	return true
+}
+
+func assertM3Equals(t *testing.T, exp, act Mat3, msg string) bool {
+	return assert(t, isMatEqual(exp[:], act[:], M3LEN), msg+fmt.Sprint(":\n\t\tExp: ", exp, "\n\t\tAct: ", act))
+}
+
+func assertM4Equals(t *testing.T, exp, act Mat4, msg string) bool {
+	return assert(t, isMatEqual(exp[:], act[:], M4LEN), msg+fmt.Sprint(":\n\t\tExp: ", exp, "\n\t\tAct: ", act))
 }

@@ -161,6 +161,81 @@ func (m *Mat4) determinant() entry {
 		m[3]*(-m[n+0]*d12+m[n+1]*d02-m[n+2]*d01)
 }
 
+// inverse: 3x3 matrices
+// only defined if matrix is invertible (i.e. det != 0)
+func (m *Mat3) inverse() *Mat3 {
+	sc := entry(1) / m.determinant()
+	r0, r1, r2 := 0, V3LEN, 2*V3LEN
+	return &Mat3{ // formula adapted from the GLM library
+		+sc * (m[r1+1]*m[r2+2] - m[r2+1]*m[r1+2]),
+		-sc * (m[r0+1]*m[r2+2] - m[r2+1]*m[r0+2]),
+		+sc * (m[r0+1]*m[r1+2] - m[r1+1]*m[r0+2]),
+
+		-sc * (m[r1+0]*m[r2+2] - m[r2+0]*m[r1+2]),
+		+sc * (m[r0+0]*m[r2+2] - m[r2+0]*m[r0+2]),
+		-sc * (m[r0+0]*m[r1+2] - m[r1+0]*m[r0+2]),
+
+		+sc * (m[r1+0]*m[r2+1] - m[r2+0]*m[r1+1]),
+		-sc * (m[r0+0]*m[r2+1] - m[r2+0]*m[r0+1]),
+		+sc * (m[r0+0]*m[r1+1] - m[r1+0]*m[r0+1]),
+	}
+}
+
+// inverse: 4x4 matrices
+// only defined if matrix is invertible (i.e. det != 0)
+// formula adapted from the GLM library
+func (m *Mat4) inverse() *Mat4 {
+	sc := entry(1) / m.determinant()
+	r0, r1, r2, r3 := 0, V4LEN, 2*V4LEN, 3*V4LEN
+
+	// precompute coefficients
+	c00 := m[r2+2]*m[r3+3] - m[r3+2]*m[r2+3]
+	c02 := m[r1+2]*m[r3+3] - m[r3+2]*m[r1+3]
+	c03 := m[r1+2]*m[r2+3] - m[r2+2]*m[r1+3]
+
+	c04 := m[r2+1]*m[r3+3] - m[r3+1]*m[r2+3]
+	c06 := m[r1+1]*m[r3+3] - m[r3+1]*m[r1+3]
+	c07 := m[r1+1]*m[r2+3] - m[r2+1]*m[r1+3]
+
+	c08 := m[r2+1]*m[r3+2] - m[r3+1]*m[r2+2]
+	c10 := m[r1+1]*m[r3+2] - m[r3+1]*m[r1+2]
+	c11 := m[r1+1]*m[r2+2] - m[r2+1]*m[r1+2]
+
+	c12 := m[r2+0]*m[r3+3] - m[r3+0]*m[r2+3]
+	c14 := m[r1+0]*m[r3+3] - m[r3+0]*m[r1+3]
+	c15 := m[r1+0]*m[r2+3] - m[r2+0]*m[r1+3]
+
+	c16 := m[r2+0]*m[r3+2] - m[r3+0]*m[r2+2]
+	c18 := m[r1+0]*m[r3+2] - m[r3+0]*m[r1+2]
+	c19 := m[r1+0]*m[r2+2] - m[r2+0]*m[r1+2]
+
+	c20 := m[r2+0]*m[r3+1] - m[r3+0]*m[r2+1]
+	c22 := m[r1+0]*m[r3+1] - m[r3+0]*m[r1+1]
+	c23 := m[r1+0]*m[r2+1] - m[r2+0]*m[r1+1]
+
+	return &Mat4{
+		+sc * (m[r1+1]*c00 - m[r1+2]*c04 + m[r1+3]*c08),
+		-sc * (m[r0+1]*c00 - m[r0+2]*c04 + m[r0+3]*c08),
+		+sc * (m[r0+1]*c02 - m[r0+2]*c06 + m[r0+3]*c10),
+		-sc * (m[r0+1]*c03 - m[r0+2]*c07 + m[r0+3]*c11),
+
+		-sc * (m[r1+0]*c00 - m[r1+2]*c12 + m[r1+3]*c16),
+		+sc * (m[r0+0]*c00 - m[r0+2]*c12 + m[r0+3]*c16),
+		-sc * (m[r0+0]*c02 - m[r0+2]*c14 + m[r0+3]*c18),
+		+sc * (m[r0+0]*c03 - m[r0+2]*c15 + m[r0+3]*c19),
+
+		+sc * (m[r1+0]*c04 - m[r1+1]*c12 + m[r1+3]*c20),
+		-sc * (m[r0+0]*c04 - m[r0+1]*c12 + m[r0+3]*c20),
+		+sc * (m[r0+0]*c06 - m[r0+1]*c14 + m[r0+3]*c22),
+		-sc * (m[r0+0]*c07 - m[r0+1]*c15 + m[r0+3]*c23),
+
+		-sc * (m[r1+0]*c08 - m[r1+1]*c16 + m[r1+2]*c20),
+		+sc * (m[r0+0]*c08 - m[r0+1]*c16 + m[r0+2]*c20),
+		-sc * (m[r0+0]*c10 - m[r0+1]*c18 + m[r0+2]*c22),
+		+sc * (m[r0+0]*c11 - m[r0+1]*c19 + m[r0+2]*c23),
+	}
+}
+
 // Wrappers for each of the types:
 
 // addition: 3x3 matrices
