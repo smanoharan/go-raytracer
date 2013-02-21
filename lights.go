@@ -15,9 +15,7 @@ type Light interface {
 }
 
 // A Shader determines the color of a point in the scene using the Lights and Materials.
-type Shader interface {
-	GetColor(light *Light, lightDir, normal *Vec3, ray *Ray, mat *Material, dist entry) *Vec3
-}
+type Shader func(light *Light, lightDir, normal *Vec3, ray *Ray, mat *Material, dist entry) *Vec3
 
 // TODO: Concrete impl of Lights: Point and Directional
 // TODO: Concrete impl of Shader: Blinn-Phong

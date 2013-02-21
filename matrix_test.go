@@ -190,8 +190,6 @@ func TestTransposeOf4x4Matrices(t *testing.T) {
 	assertEquals(t, m42t, *m42.transpose(), "Mat4 transpose 2")
 }
 
-const ZERO entry = entry(0) // for 0 as a float
-
 func TestDeterminantOf3x3Matrices(t *testing.T) {
 	assertEquals(t, ZERO, m31.determinant(), "Mat3 determinant 1")
 	assertEquals(t, ZERO, m32.determinant(), "Mat3 determinant 2")

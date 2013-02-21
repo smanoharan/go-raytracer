@@ -13,20 +13,33 @@ const (
 	V4LEN = 4
 )
 
-// define names for Vector ordinates
-const (
-	cX = 0
-	cY = 1
-	cZ = 2
-	cW = 3
-)
-
 type (
 	entry float64      // each element of a matrix/vector
-	Mat3  [M3LEN]entry // 3x3 matrix
-	Mat4  [M4LEN]entry // 4x4 matrix
 	Vec3  [V3LEN]entry // 3D vector
 	Vec4  [V4LEN]entry // 4D vector
+	Mat3  [M3LEN]entry // 3x3 matrix
+	Mat4  [M4LEN]entry // 4x4 matrix
+)
+
+// define shorthands:
+const (
+	cX, cY, cZ, cW = 0, 1, 2, 3 // vector ordinates
+ 	ZERO, ONE, TWO, FOUR entry = entry(0), entry(1), entry(2), entry(4) // numbers
+)
+
+// identity and zero of each type:
+var (
+	IDENTITY_M3 Mat3 = Mat3{1,0,0,0,1,0,0,0,1}
+	ZERO_M3 Mat3 = Mat3{0,0,0,0,0,0,0,0,0}
+
+	IDENTITY_M4 Mat4 = Mat4{1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1}
+	ZERO_M4 Mat4 = Mat4{0,0,0,0,0,0,0,0, 0,0,0,0, 0,0,0,0}
+
+	X_V3, Y_V3, Z_V3 Vec3 = Vec3{1,0,0}, Vec3{0,1,0}, Vec3{0,0,1}
+	ZERO_V3 Vec3 = Vec3{0,0,0}
+
+	X_V4, Y_V4, Z_V4, W_V4 Vec4 = Vec4{1,0,0,0}, Vec4{0,1,0,0}, Vec4{0,0,1,0}, Vec4{0,0,0,1}
+	ZERO_V4 Vec4 = Vec4{0,0,0,0}
 )
 
 // addition: add slices m1 and m2, each with n entries. result is placed in m3. 
@@ -86,6 +99,18 @@ func mult(m1, m2, m3 []entry, a, n, b int) {
 // wrap around math.Sqrt
 func sqrt(e entry) entry {
 	return entry(math.Sqrt(float64(e)))
+}
+
+// distanceTo: 3-vectors
+func (v *Vec3) distanceTo(u *Vec3) entry {
+	dx, dy, dz := v[cX]-u[cX], v[cY]-u[cY], v[cZ]-u[cZ]
+	return sqrt(dx*dx + dy*dy + dz*dz)
+}
+
+// distanceTo: 4-vectors
+func (v *Vec4) distanceTo(u *Vec4) entry {
+	dx, dy, dz, dw := v[cX]-u[cX], v[cY]-u[cY], v[cZ]-u[cZ], v[cW]-u[cW]
+	return sqrt(dx*dx + dy*dy + dz*dz + dw*dw)
 }
 
 // length: 3-vectors
