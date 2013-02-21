@@ -23,23 +23,23 @@ type (
 
 // define shorthands:
 const (
-	cX, cY, cZ, cW = 0, 1, 2, 3 // vector ordinates
- 	ZERO, ONE, TWO, FOUR entry = entry(0), entry(1), entry(2), entry(4) // numbers
+	cX, cY, cZ, cW             = 0, 1, 2, 3                             // vector ordinates
+	ZERO, ONE, TWO, FOUR entry = entry(0), entry(1), entry(2), entry(4) // numbers
 )
 
 // identity and zero of each type:
 var (
-	IDENTITY_M3 Mat3 = Mat3{1,0,0,0,1,0,0,0,1}
-	ZERO_M3 Mat3 = Mat3{0,0,0,0,0,0,0,0,0}
+	IDENTITY_M3 Mat3 = Mat3{1, 0, 0, 0, 1, 0, 0, 0, 1}
+	ZERO_M3     Mat3 = Mat3{0, 0, 0, 0, 0, 0, 0, 0, 0}
 
-	IDENTITY_M4 Mat4 = Mat4{1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1}
-	ZERO_M4 Mat4 = Mat4{0,0,0,0,0,0,0,0, 0,0,0,0, 0,0,0,0}
+	IDENTITY_M4 Mat4 = Mat4{1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1}
+	ZERO_M4     Mat4 = Mat4{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 
-	X_V3, Y_V3, Z_V3 Vec3 = Vec3{1,0,0}, Vec3{0,1,0}, Vec3{0,0,1}
-	ZERO_V3 Vec3 = Vec3{0,0,0}
+	X_V3, Y_V3, Z_V3 Vec3 = Vec3{1, 0, 0}, Vec3{0, 1, 0}, Vec3{0, 0, 1}
+	ZERO_V3          Vec3 = Vec3{0, 0, 0}
 
-	X_V4, Y_V4, Z_V4, W_V4 Vec4 = Vec4{1,0,0,0}, Vec4{0,1,0,0}, Vec4{0,0,1,0}, Vec4{0,0,0,1}
-	ZERO_V4 Vec4 = Vec4{0,0,0,0}
+	X_V4, Y_V4, Z_V4, W_V4 Vec4 = Vec4{1, 0, 0, 0}, Vec4{0, 1, 0, 0}, Vec4{0, 0, 1, 0}, Vec4{0, 0, 0, 1}
+	ZERO_V4                Vec4 = Vec4{0, 0, 0, 0}
 )
 
 // addition: add slices m1 and m2, each with n entries. result is placed in m3. 
@@ -61,12 +61,12 @@ func (m *Vec4) dot(n *Vec4) entry {
 
 // elementwise product: 3-vectors
 func (m *Vec3) times(n *Vec3) *Vec3 {
-	return &Vec3{ m[cX]*n[cX], m[cY]*n[cY], m[cZ]*n[cZ] }
+	return &Vec3{m[cX] * n[cX], m[cY] * n[cY], m[cZ] * n[cZ]}
 }
 
 // elementwise product: 4-vectors
 func (m *Vec4) times(n *Vec4) *Vec4 {
-	return &Vec4{ m[cX]*n[cX], m[cY]*n[cY], m[cZ]*n[cZ], m[cW]*n[cW] }
+	return &Vec4{m[cX] * n[cX], m[cY] * n[cY], m[cZ] * n[cZ], m[cW] * n[cW]}
 }
 
 // cross product: (only defined for) 3-vectors
@@ -114,6 +114,11 @@ func sqrt(e entry) entry {
 // wrap around math.Pow
 func (x entry) pow(y entry) entry {
 	return entry(math.Pow(float64(x), float64(y)))
+}
+
+// wrap around math.Tan
+func tan(degrees entry) entry {
+	return entry(math.Tan(float64(degrees) * (math.Pi / 180.0))) // incl. conversion to radians
 }
 
 // distanceTo: 3-vectors

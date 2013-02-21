@@ -113,7 +113,7 @@ func TestDotProduct4DVectors(t *testing.T) {
 }
 
 func TestElementProductOf3DVectors(t *testing.T) {
-	exp := Vec3{4,14,-1232}
+	exp := Vec3{4, 14, -1232}
 
 	// check both directions
 	assertEquals(t, exp, *v31.times(&v32), "Vec3 times 1x2")

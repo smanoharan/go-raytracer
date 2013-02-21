@@ -5,14 +5,14 @@ package main
 // A Material stores lighting properties of an object.
 type Material struct {
 	ambient, emission, diffuse, specular Vec3
-	shininess entry
+	shininess                            entry
 }
 
 // A Light is a source of light in the scene.
 type Light interface {
-	OffsetFrom(point *Vec3) *Vec3 // get un-normalized direction to light from point
+	OffsetFrom(point *Vec3) *Vec3   // get un-normalized direction to light from point
 	AttenuationAt(dist entry) entry // get attentuation factor at the distance
-	GetColor() *Vec3 // get color of the light
+	GetColor() *Vec3                // get color of the light
 }
 
 // A Shader determines the color of a point in the scene using the Lights and Materials.
@@ -29,7 +29,7 @@ func (p *PointLight) GetColor() *Vec3 {
 }
 
 func (p *PointLight) OffsetFrom(point *Vec3) *Vec3 {
-	return p.position.minus(point) 
+	return p.position.minus(point)
 }
 
 func (p *PointLight) AttenuationAt(dist entry) entry {
@@ -61,7 +61,7 @@ func BlinnPhongShader(lightPtr *Light, lightDir, normal *Vec3, ray *Ray, mat *Ma
 
 	// compute the halfway vector between eye direction and light direction:
 	halfVec := lightDir.minus(&(ray.direction)).direction()
-	
+
 	// diffuse factor is normal dot light direction (if > 0)
 	diffuseColor := &ZERO_V3
 	if diffuse := normal.dot(lightDir); diffuse > 0 {
@@ -75,5 +75,5 @@ func BlinnPhongShader(lightPtr *Light, lightDir, normal *Vec3, ray *Ray, mat *Ma
 	}
 
 	// scale down by attenuation
-	return light.GetColor().scale(ONE/light.AttenuationAt(dist)).times(diffuseColor.plus(specularColor))
+	return light.GetColor().scale(ONE / light.AttenuationAt(dist)).times(diffuseColor.plus(specularColor))
 }
