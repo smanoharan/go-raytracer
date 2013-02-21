@@ -59,6 +59,16 @@ func (m *Vec4) dot(n *Vec4) entry {
 	return m[cX]*n[cX] + m[cY]*n[cY] + m[cZ]*n[cZ] + m[cW]*n[cW]
 }
 
+// elementwise product: 3-vectors
+func (m *Vec3) times(n *Vec3) *Vec3 {
+	return &Vec3{ m[cX]*n[cX], m[cY]*n[cY], m[cZ]*n[cZ] }
+}
+
+// elementwise product: 4-vectors
+func (m *Vec4) times(n *Vec4) *Vec4 {
+	return &Vec4{ m[cX]*n[cX], m[cY]*n[cY], m[cZ]*n[cZ], m[cW]*n[cW] }
+}
+
 // cross product: (only defined for) 3-vectors
 func (m *Vec3) cross(n *Vec3) *Vec3 {
 	return &Vec3{
@@ -99,6 +109,11 @@ func mult(m1, m2, m3 []entry, a, n, b int) {
 // wrap around math.Sqrt
 func sqrt(e entry) entry {
 	return entry(math.Sqrt(float64(e)))
+}
+
+// wrap around math.Pow
+func (x entry) pow(y entry) entry {
+	return entry(math.Pow(float64(x), float64(y)))
 }
 
 // distanceTo: 3-vectors
@@ -289,6 +304,16 @@ func (m *Vec4) plus(n *Vec4) *Vec4 {
 	res := new(Vec4)
 	add(m[:], n[:], res[:], V4LEN)
 	return res
+}
+
+// subtraction: 3-vectors
+func (m *Vec3) minus(n *Vec3) *Vec3 {
+	return m.plus(n.scale(-ONE))
+}
+
+// subtraction: 4-vectors
+func (m *Vec4) minus(n *Vec4) *Vec4 {
+	return m.plus(n.scale(-ONE))
 }
 
 // scalar product for 3-vectors

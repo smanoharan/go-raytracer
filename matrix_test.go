@@ -112,6 +112,22 @@ func TestDotProduct4DVectors(t *testing.T) {
 	assertEquals(t, exp, v42.dot(&v41), "Vec4 dot 2.1")
 }
 
+func TestElementProductOf3DVectors(t *testing.T) {
+	exp := Vec3{4,14,-1232}
+
+	// check both directions
+	assertEquals(t, exp, *v31.times(&v32), "Vec3 times 1x2")
+	assertEquals(t, exp, *v32.times(&v31), "Vec3 times 2x1")
+}
+
+func TestElementProductOf4DVectors(t *testing.T) {
+	exp := Vec4{-1440, 15, -1120, 396}
+
+	// check both directions
+	assertEquals(t, exp, *v41.times(&v42), "Vec4 times 1x2")
+	assertEquals(t, exp, *v42.times(&v41), "Vec4 times 2x1")
+}
+
 func TestCrossProduct(t *testing.T) {
 	assertEquals(t, Vec3{-301, 156, 1}, *v31.cross(&v32), "Vec3 cross 1x2")
 	assertEquals(t, Vec3{301, -156, -1}, *v32.cross(&v31), "Vec3 cross 2x1")
