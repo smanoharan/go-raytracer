@@ -18,18 +18,48 @@ type Shape interface {
 type Sphere struct {
 	// transform, inverse(trans), transpose(transInv):
 	trans, transInv, transInvTr Mat4
-	radius                      entry
 	mat                         *Material
 }
 
-// NewSphere creates a Sphere with a given radius, material and transformation
-func NewSphere(radius entry, mat *Material, trans *Mat4) *Sphere {
+func rotate(axis *Vec3, angle entry) *Mat3 {
+	x, y, z := axis[cX], axis[cY], axis[cZ]
+
+	// using Rodrequiz formula
+	cosT, sinT := cos(angle), sin(angle)
+	p1 := &Mat3{x * x, x * y, x * z, x * y, y * y, y * z, x * z, y * z, z * z}
+	p2 := &Mat3{0, -z, y, z, 0, -x, -y, x, 0}
+	return IDENTITY_M3.scale(cosT).plus(p1.scale(ONE - cosT)).plus(p2.scale(sinT))
+}
+
+func transform(scale, pos, rotAxis *Vec3, angle entry) *Mat4 {
+	sx, sy, sz := scale[cX], scale[cY], scale[cZ]
+	rot := rotate(rotAxis, angle)
+	return &Mat4{
+		rot[0] * sx, rot[1] * sx, rot[2] * sx, pos[cX],
+		rot[3] * sy, rot[4] * sy, rot[5] * sy, pos[cY],
+		rot[6] * sz, rot[7] * sz, rot[8] * sz, pos[cZ],
+		0, 0, 0, 1,
+	}
+}
+
+// NewSphere creates a Sphere at a given point, with a given radius and material
+func NewSphere(radius entry, center *Vec3, mat *Material) *Sphere {
+	radiusVec := &Vec3{radius, radius, radius}
+	return NewEllipsoid(radiusVec, center, mat)
+}
+
+// NewEllipsoid creates a Ellipsoid (scaled sphere) at a point
+func NewEllipsoid(radius, center *Vec3, mat *Material) *Sphere {
+	return NewRotatedEllipsoid(radius, center, &X_V3, ZERO, mat)
+}
+
+// NewRotatedEllipsoid creates an Ellipsoid with a rotation applied
+// Parameters: radius-{x,y,z} ; center-{x,y,z} ; rotation-axis-{x,y,z}, rotation-angle (degrees)
+func NewRotatedEllipsoid(radius, center, rot *Vec3, angle entry, mat *Material) *Sphere {
+	trans := transform(radius, center, rot, angle)
 	transInv := trans.inverse()
 	transInvTr := transInv.transpose()
-	return &Sphere{
-		*trans, *transInv, *transInvTr,
-		radius, mat,
-	}
+	return &Sphere{*trans, *transInv, *transInvTr, mat}
 }
 
 // GetMaterial returns the material of the surface of the sphere.
@@ -60,7 +90,7 @@ func (s *Sphere) Intersect(ray *Ray) (hit bool, res *Intersection) {
 	// a quadratic ax^2 + bx + c = 0
 	a := invDir.dot(invDir)
 	b := TWO * invDir.dot(invStart)
-	c := invStart.dot(invStart) - (s.radius * s.radius)
+	c := invStart.dot(invStart) - ONE // since s.radius^2 is ONE
 
 	// check det >= 0
 	if det := b*b - FOUR*a*c; det >= 0 {

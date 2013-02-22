@@ -116,9 +116,23 @@ func (x entry) pow(y entry) entry {
 	return entry(math.Pow(float64(x), float64(y)))
 }
 
+func radians(degrees entry) float64 {
+	return float64(degrees) * (math.Pi / 180.0)
+}
+
 // wrap around math.Tan
 func tan(degrees entry) entry {
-	return entry(math.Tan(float64(degrees) * (math.Pi / 180.0))) // incl. conversion to radians
+	return entry(math.Tan(radians(degrees)))
+}
+
+// wrap around math.Cos
+func cos(degrees entry) entry {
+	return entry(math.Cos(radians(degrees)))
+}
+
+// wrap around math.Sin
+func sin(degrees entry) entry {
+	return entry(math.Sin(radians(degrees)))
 }
 
 // distanceTo: 3-vectors

@@ -8,7 +8,7 @@ import (
 )
 
 func TestIntersectionForUnitSphere(t *testing.T) {
-	s := NewSphere(ONE, &Material{}, &IDENTITY_M4) // unit sphere, centered at origin
+	s := NewSphere(ONE, &ZERO_V3, &Material{}) // unit sphere, centered at origin
 	msg := "Ray-Sphere intersection "
 
 	// case 0: a ray from origin passing through x-axis:
@@ -45,36 +45,27 @@ func TestIntersectionForScaledSphere(t *testing.T) {
 	msg := "Scaled Ray-Sphere intersection "
 
 	// unit sphere, centered at origin
-	mat1 := &Mat4{0.5, 0, 0, 0, 0, 1.25, 0, 0, 0, 0, 2.5, 0, 0, 0, 0, 1}
-	s1 := NewSphere(ONE, &Material{}, mat1)
-
-	// sphere of radius 0.5, centered at origin
-	mat2 := &Mat4{1, 0, 0, 0, 0, 2.5, 0, 0, 0, 0, 5, 0, 0, 0, 0, 1}
-	s2 := NewSphere(entry(0.5), &Material{}, mat2)
+	s1 := NewEllipsoid(sc, &ZERO_V3, &Material{})
 
 	// case 0: a ray from origin passing through x-axis:
 	ray := &Ray{ZERO_V3, X_V3}
 	exp := &Intersection{*X_V3.scale(sc[cX]), X_V3, ONE * sc[cX]}
 	assertIntersectionEquals(t, s1, ray, true, exp, msg+"0.1")
-	assertIntersectionEquals(t, s2, ray, true, exp, msg+"0.2")
 
 	// case 1: a ray from outside the sphere passing through the sphere via y-axis:
 	ray = &Ray{*Y_V3.scale(-FOUR), Y_V3}
 	exp = &Intersection{*Y_V3.scale(-ONE).scale(sc[cY]), *Y_V3.scale(-ONE), entry(2.75)}
 	assertIntersectionEquals(t, s1, ray, true, exp, msg+"1.1")
-	assertIntersectionEquals(t, s2, ray, true, exp, msg+"1.2")
 
 	// case 2: a ray just passing through the sphere at (0,1,0):
 	ray = &Ray{Vec3{0, 1.25, -4}, Z_V3}
 	exp = &Intersection{*Y_V3.scale(sc[cY]), Y_V3, FOUR}
 	assertIntersectionEquals(t, s1, ray, true, exp, msg+"2.1")
-	assertIntersectionEquals(t, s2, ray, true, exp, msg+"2.2")
 
 	// case 3: a ray in dir (1,1,1) missing the sphere
 	dir := &Vec3{1, 1, 1}
 	ray = &Ray{Vec3{2, 1, 2}, *(dir.direction())}
 	assertIntersectionEquals(t, s1, ray, false, nil, msg+"3.1")
-	assertIntersectionEquals(t, s2, ray, false, nil, msg+"3.2")
 
 	// case 4: skipped.
 }
@@ -82,8 +73,7 @@ func TestIntersectionForScaledSphere(t *testing.T) {
 // same cases as TestIntersectionForUnitSphere, except for translation by (-10, 0.44, -2.5)
 func TestIntersectionForTranslatedUnitSphere(t *testing.T) {
 	tr := &Vec3{-10, 0.44, -2.5}
-	trMat := Mat4{1, 0, 0, -10, 0, 1, 0, 0.44, 0, 0, 1, -2.5, 0, 0, 0, 1}
-	s := NewSphere(ONE, &Material{}, &trMat) // unit sphere, centered at origin
+	s := NewSphere(ONE, tr, &Material{}) // unit sphere, centered at origin
 	msg := "Translated Ray-Sphere intersection "
 
 	// case 0: a ray from origin passing through x-axis:
@@ -119,8 +109,8 @@ func TestIntersectionForTranslatedUnitSphere(t *testing.T) {
 
 // tests for a sphere which is translated to (-3,1,2) and scaled by (2,0.5,3)
 func TestIntersectionForTranslatedScaledSphere(t *testing.T) {
-	mat := &Mat4{0.5, 0, 0, -3, 0, 0.125, 0, 1, 0, 0, 0.75, 2, 0, 0, 0, 1}
-	s := NewSphere(FOUR, &Material{}, mat)
+	tr, sc := &Vec3{-3, 1, 2}, &Vec3{2, 0.5, 3}
+	s := NewEllipsoid(sc, tr, &Material{})
 	msg := "Translated Scaled Ray-Sphere intersection "
 
 	// case 0: a ray which is missing the sphere
