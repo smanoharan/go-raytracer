@@ -64,7 +64,7 @@ func BlinnPhongShader(lightPtr *Light, lightDir, normal *Vec3, ray *Ray, mat *Ma
 
 	// diffuse factor is normal dot light direction (if > 0)
 	diffuseColor := &ZERO_V3
-	if diffuse := normal.dot(lightDir); diffuse > 0 {
+	if diffuse := lightDir.dot(normal); diffuse > 0 {
 		diffuseColor = mat.diffuse.scale(diffuse)
 	}
 

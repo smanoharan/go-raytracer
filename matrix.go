@@ -418,8 +418,3 @@ func (m *Mat4) transpose() *Mat4 {
 	transpose(m[:], res[:], V4LEN)
 	return res
 }
-
-func main() {
-	// TODO
-	print("\n")
-}

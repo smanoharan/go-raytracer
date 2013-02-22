@@ -3,8 +3,8 @@
 package main
 
 import (
-	"math/rand"
 	"image"
+	"math/rand"
 )
 
 // the options controlling the behaviour of the RayTracer
@@ -42,7 +42,7 @@ func NewRayTracer(view *Camera, options *RayTracerOptions) *RayTracer {
 }
 
 // find the closest shape which intersects the ray
-func findClosestIntersection(ray *Ray, scene []*Shape) (hit bool, inter *Intersection, closest *Shape) {
+func findClosestIntersection(ray *Ray, scene []Shape) (hit bool, inter *Intersection, closest *Shape) {
 
 	// by default: no intersection
 	hit, inter, closest = false, nil, nil
@@ -50,8 +50,8 @@ func findClosestIntersection(ray *Ray, scene []*Shape) (hit bool, inter *Interse
 	// iterate through each shape:
 	for _, shape := range scene {
 		// check if this shape hits the ray at a closer point than previous least.
-		if h, i := (*shape).Intersect(ray); h && (!hit || i.dist < inter.dist) {
-			hit, inter, closest = true, i, shape
+		if h, i := shape.Intersect(ray); h && (!hit || i.dist < inter.dist) {
+			hit, inter, closest = true, i, &shape
 		}
 	}
 
@@ -65,17 +65,6 @@ func (r *RayTracer) buildRayFromEyeToImage(i, j entry, eye *Vec3) *Ray {
 	beta := r.tanY * (ONE - (i / r.halfHeight))
 	dir := r.basisU.scale(alpha).plus(r.basisV.scale(beta)).minus(&r.basisW).direction()
 	return &Ray{*eye, *dir}
-}
-
-// scale a color in [0,1] to the [0,255] range.
-func (e entry) toRGB() uint8 {
-	if e >= ONE {
-		return uint8(255)
-	}
-	if e <= ZERO {
-		return uint8(0)
-	}
-	return uint8(e * entry(256))
 }
 
 // reflect a ray about normal
@@ -93,7 +82,7 @@ func randVec() *Vec3 {
 }
 
 // Compute the color of the current ray by tracing it into the scene
-func (r *RayTracer) findColor(ray *Ray, scene []*Shape, lights []*Light, curDepth int) *Vec3 {
+func (r *RayTracer) findColor(ray *Ray, scene []Shape, lights []Light, curDepth int) *Vec3 {
 
 	// check if the ray hits any objects:
 	if hit, inter, closest := findClosestIntersection(ray, scene); hit {
@@ -106,7 +95,7 @@ func (r *RayTracer) findColor(ray *Ray, scene []*Shape, lights []*Light, curDept
 		for _, light := range lights {
 
 			// find offset to light
-			lightOffset := (*light).OffsetFrom(&inter.point)
+			lightOffset := light.OffsetFrom(&inter.point)
 			distToLight := lightOffset.magnitude()
 
 			// enable soft-shadowing by tracing multiple shadow rays
@@ -121,7 +110,7 @@ func (r *RayTracer) findColor(ray *Ray, scene []*Shape, lights []*Light, curDept
 
 				// check if shadowRay hits any objects in the scene:
 				if h, i, _ := findClosestIntersection(shadowRay, scene); (!h) || i.dist >= distToLight {
-					extraColor := BlinnPhongShader(light, shadowRayDir, &i.normal, ray, material, distToLight)
+					extraColor := BlinnPhongShader(&light, shadowRayDir, &inter.normal, ray, material, distToLight)
 					color = color.plus(extraColor.scale(rayWeight))
 				}
 			}
@@ -158,9 +147,9 @@ func (r *RayTracer) findColor(ray *Ray, scene []*Shape, lights []*Light, curDept
 	return &ZERO_V3
 }
 
-func (r *RayTracer) Draw(scene []*Shape, lights []*Light) *image.RGBA {
-	
-	img := NewOutputImage(r.width,r.height)
+func (r *RayTracer) Draw(scene []Shape, lights []Light) *image.RGBA {
+
+	img := NewOutputImage(r.width, r.height)
 
 	// iterate through the image
 	for y := 0; y < r.height; y++ {
