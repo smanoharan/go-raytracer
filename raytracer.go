@@ -151,12 +151,27 @@ func (r *RayTracer) Draw(scene []Shape, lights []Light) *image.RGBA {
 
 	img := NewOutputImage(r.width, r.height)
 
+	// sampling factor precomputation:
+	sf := r.options.samplingFactor
+	raySubPixel := ONE / entry(sf)
+	raySFmax := raySubPixel / TWO
+	rayWeight := ONE / entry(sf*sf)
+
 	// iterate through the image
 	for y := 0; y < r.height; y++ {
 		for x := 0; x < r.width; x++ {
-			cx, cy := entry(x), entry(y)
-			ray := r.buildRayFromEyeToImage(cy, cx, &r.eyePos)
-			Set(img, x, y, r.findColor(ray, scene, lights, 0))
+			color := &Vec3{0, 0, 0}
+
+			// apply supersampling
+			for cx := 0; cx < sf; cx++ {
+				for cy := 0; cy < sf; cy++ {
+					dx := entry(x) + (entry(cx) * raySubPixel) + smallRand(float64(raySFmax))
+					dy := entry(y) + (entry(cy) * raySubPixel) + smallRand(float64(raySFmax))
+					ray := r.buildRayFromEyeToImage(dy, dx, &r.eyePos)
+					color = color.plus(r.findColor(ray, scene, lights, 0).scale(rayWeight))
+				}
+			}
+			Set(img, x, y, color)
 		}
 	}
 
