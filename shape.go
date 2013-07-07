@@ -14,13 +14,6 @@ type Shape interface {
 	Intersect(ray *Ray) (bool, *Intersection)
 }
 
-// Sphere implementation of Shape
-type Sphere struct {
-	// transform, inverse(trans), transpose(transInv):
-	trans, transInv, transInvTr Mat4
-	mat                         *Material
-}
-
 func rotate(axis *Vec3, angle entry) *Mat3 {
 	x, y, z := axis[cX], axis[cY], axis[cZ]
 
@@ -40,6 +33,21 @@ func transform(scale, pos, rotAxis *Vec3, angle entry) *Mat4 {
 		rot[6] * sz, rot[7] * sz, rot[8] * sz, pos[cZ],
 		0, 0, 0, 1,
 	}
+}
+
+func toV4(v3 *Vec3, w entry) *Vec4 {
+	return &Vec4{v3[cX], v3[cY], v3[cZ], w}
+}
+
+func toV3(v4 *Vec4) *Vec3 {
+	return &Vec3{v4[cX], v4[cY], v4[cZ]}
+}
+
+// Sphere implementation of Shape
+type Sphere struct {
+	// transform, inverse(trans), transpose(transInv):
+	trans, transInv, transInvTr Mat4
+	mat                         *Material
 }
 
 // NewSphere creates a Sphere at a given point, with a given radius and material
@@ -65,14 +73,6 @@ func NewRotatedEllipsoid(radius, center, rot *Vec3, angle entry, mat *Material) 
 // GetMaterial returns the material of the surface of the sphere.
 func (s *Sphere) GetMaterial() *Material {
 	return s.mat
-}
-
-func toV4(v3 *Vec3, w entry) *Vec4 {
-	return &Vec4{v3[cX], v3[cY], v3[cZ], w}
-}
-
-func toV3(v4 *Vec4) *Vec3 {
-	return &Vec3{v4[cX], v4[cY], v4[cZ]}
 }
 
 // Intersect checks if the ray intersects the sphere.
@@ -125,4 +125,70 @@ func (s *Sphere) Intersect(ray *Ray) (hit bool, res *Intersection) {
 	return
 }
 
-// TODO: Concrete implementations of shapes: Triangle and Quad
+// Implementation of Quad
+type Quad struct {
+	vecU, vecV, normal, origin, topB, sideB Vec3
+	topL, sideL entry
+	mat *Material
+}
+
+// combine the 3 vectors into a matrix
+func combine(a, b, c *Vec3) *Mat3 {
+	return &Mat3{ a[0], b[0], c[0], a[1], b[1], c[1], a[2], b[2], c[2] }
+}
+
+// NewQuad creates a quad, e.g. a rectangular truncated plane.
+func NewQuad(ptA, ptB, ptC, ptD *Vec3, mat *Material) *Quad {
+
+	// normalize the U and V direction
+	uN, vN := ptB.minus(ptA).direction(), ptD.minus(ptA).direction()
+	normal := uN.cross(vN)
+
+	// transform the C->A vector into vecU, vecV, normal basis
+	cuv := combine(uN, vN, normal).inverse().timesVec(ptC.minus(ptA))
+	if cuv[cZ] != 0 {
+		panic("The points A,B,C,D do not lie on the same plane")
+	}
+
+	// obtain the top boundary ( A->D vector )
+	dlen := ptD.minus(ptA).magnitude()
+	topB := Vec3{ dlen - cuv[cY], cuv[cX], ZERO }
+	topL := cuv[cX] * dlen
+	
+	// obtain the side boundary ( A->B vector )
+	blen := ptB.minus(ptA).magnitude()
+	sideB := Vec3{ cuv[cY], blen - cuv[cX], ZERO }
+	sideL := cuv[cY] * blen
+	
+	return &Quad{ *uN, *vN, *normal, *ptA, topB, sideB, topL, sideL, mat }
+}
+
+// GetMaterial returns the material of the quad. 
+func (q *Quad) GetMaterial() *Material {
+	return q.mat
+}
+
+// compute the intersection matrix: [ u | v | -raydirection ]
+func computeIntersection(a, b, c *Vec3) *Mat3 {
+	return &Mat3{ a[0], b[0], -c[0], a[1], b[1], -c[1], a[2], b[2], -c[2] }
+}
+
+// Intersect checks if the ray intersects the quad.
+func (q *Quad) Intersect(ray *Ray) (hit bool, res *Intersection) {
+
+	// by default: no intersection
+	hit, res = false, nil
+
+	m := computeIntersection(&q.vecU, &q.vecV, &ray.direction)
+
+	if m.determinant() != 0 {
+		pqt := m.inverse().timesVec(ray.start.minus(&q.origin))
+		if (pqt[0] > 0) && (pqt[1] > 0) && (pqt[2] > 0) && (pqt.dot(&q.topB) <= q.topL) && (pqt.dot(&q.sideB) <= q.sideL) {
+			pt := ray.start.plus(ray.direction.scale(pqt[2]))
+			hit, res = true, &Intersection{*pt, q.normal, pqt[2]}
+		}
+	}
+	return
+}
+
+// TODO: implementation of Triangle.
